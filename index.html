@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>愚痴払い暦</title>
+<meta name="description" content="生年月日から四柱推命(簡易版)で日主と今日の巡りを見て、愚痴を書いてお焚き上げする、恋愛抜きのストレス発散アプリ。">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Zen+Maru+Gothic:wght@400;500;700&display=swap">
+<style>
+:root{
+  --night:#221c26;
+  --night-2:#2b2430;
+  --night-3:#362c39;
+  --ember:#e2793f;
+  --ember-soft:#c98f5c;
+  --ink:#f1e6d8;
+  --ink-soft:#b3a396;
+  --line:rgba(241,230,216,0.14);
+  --talisman:#efe2c5;
+  --talisman-ink:#33241c;
+  --talisman-ink-soft:#6b5744;
+  --seal:#ad392c;
+}
+
+*{ box-sizing:border-box; }
+body{
+  margin:0;
+  background:var(--night);
+  color:var(--ink);
+  font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans",sans-serif;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  padding:52px 18px 70px;
+  position:relative;
+  overflow-x:hidden;
+}
+canvas#bg{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:0;
+  pointer-events:none;
+}
+.wrap{
+  position:relative;
+  z-index:1;
+  width:100%;
+  max-width:470px;
+  display:flex;
+  flex-direction:column;
+  gap:22px;
+}
+
+.head{ text-align:center; display:flex; flex-direction:column; gap:8px; }
+.eyebrow{
+  font-size:0.7rem;
+  letter-spacing:0.3em;
+  color:var(--ember-soft);
+  text-transform:uppercase;
+}
+.title{
+  font-family:"Klee One", cursive;
+  font-weight:600;
+  font-size:1.9rem;
+  letter-spacing:0.02em;
+}
+.tagline{
+  font-size:0.82rem;
+  color:var(--ink-soft);
+  line-height:1.7;
+}
+
+.panel{
+  background:var(--night-2);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:22px 22px 24px;
+}
+
+/* birthdate entry */
+.entry-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  align-items:flex-end;
+}
+.entry-field{ display:flex; flex-direction:column; gap:6px; flex:1; min-width:160px; }
+.entry-field label{ font-size:0.76rem; color:var(--ink-soft); letter-spacing:0.06em; }
+.entry-field input[type="date"]{
+  background:var(--night-3);
+  border:1px solid var(--line);
+  border-radius:6px;
+  color:var(--ink);
+  font-family:inherit;
+  font-size:0.92rem;
+  padding:10px 12px;
+  outline:none;
+  color-scheme:dark;
+}
+.entry-field input[type="date"]:focus{ border-color:var(--ember); }
+.btn{
+  background:var(--ember);
+  color:#2a1608;
+  border:none;
+  border-radius:6px;
+  font-family:"Zen Maru Gothic",sans-serif;
+  font-weight:700;
+  font-size:0.9rem;
+  padding:11px 18px;
+  cursor:pointer;
+  transition:filter 0.15s ease, transform 0.15s ease;
+  white-space:nowrap;
+}
+.btn:hover{ filter:brightness(1.08); }
+.btn:active{ transform:translateY(1px); }
+.btn:focus-visible{ outline:2px solid var(--ink); outline-offset:2px; }
+.btn-ghost{
+  background:transparent;
+  color:var(--ember-soft);
+  border:1px solid var(--line);
+}
+
+.change-link{
+  background:none;
+  border:none;
+  color:var(--ember-soft);
+  font-family:inherit;
+  font-size:0.78rem;
+  text-decoration:underline;
+  text-underline-offset:3px;
+  cursor:pointer;
+  padding:0;
+  align-self:center;
+}
+.change-link:focus-visible{ outline:2px solid var(--ink); outline-offset:2px; }
+
+/* talisman */
+.talisman{
+  background:var(--talisman);
+  color:var(--talisman-ink);
+  border-radius:6px;
+  padding:28px 26px 22px;
+  position:relative;
+  box-shadow:0 20px 44px -24px rgba(0,0,0,0.65);
+  animation:rise 0.7s ease-out both;
+}
+@keyframes rise{ from{ opacity:0; transform:translateY(10px);} to{ opacity:1; transform:translateY(0);} }
+@media (prefers-reduced-motion: reduce){ .talisman{ animation:none; } }
+
+.seal{
+  position:absolute;
+  top:16px; right:18px;
+  width:34px; height:34px;
+  border-radius:50%;
+  background:var(--seal);
+  color:#f2e6d8;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:"Klee One", cursive;
+  font-size:0.95rem;
+  box-shadow:0 0 0 2px rgba(242,230,216,0.55) inset;
+}
+
+.nisshu-label{
+  font-size:0.72rem;
+  letter-spacing:0.24em;
+  color:var(--talisman-ink-soft);
+  text-transform:uppercase;
+}
+.nisshu-row{
+  display:flex;
+  align-items:baseline;
+  gap:14px;
+  margin-top:6px;
+}
+.nisshu-kanji{
+  font-family:"Klee One", cursive;
+  font-weight:600;
+  font-size:3.4rem;
+  line-height:1;
+}
+.nisshu-element{
+  font-size:0.9rem;
+  padding:5px 10px;
+  border-radius:20px;
+  border:1px solid currentColor;
+}
+.nisshu-blurb{
+  margin-top:14px;
+  font-size:0.9rem;
+  line-height:1.85;
+}
+
+.pillars{
+  display:flex;
+  gap:8px;
+  margin-top:20px;
+  padding-top:16px;
+  border-top:1px dashed rgba(51,36,28,0.28);
+}
+.pillar-tag{
+  flex:1;
+  text-align:center;
+  background:rgba(51,36,28,0.06);
+  border-radius:5px;
+  padding:8px 4px;
+}
+.pillar-tag .pt-label{ font-size:0.62rem; letter-spacing:0.1em; color:var(--talisman-ink-soft); }
+.pillar-tag .pt-value{ font-family:"Klee One", cursive; font-size:1.1rem; margin-top:2px; }
+
+/* today's mood */
+.today-head{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.today-kanshi{
+  font-family:"Klee One", cursive;
+  font-size:1.3rem;
+  color:var(--ember);
+}
+.relation-tag{
+  font-size:0.72rem;
+  letter-spacing:0.08em;
+  color:var(--ink-soft);
+  border:1px solid var(--line);
+  border-radius:20px;
+  padding:3px 10px;
+}
+.today-comment{
+  margin-top:14px;
+  font-size:0.95rem;
+  line-height:1.9;
+  font-family:"Klee One", cursive;
+  color:var(--ink);
+}
+
+/* vent */
+.vent-prompt{
+  font-family:"Klee One", cursive;
+  font-size:0.98rem;
+  line-height:1.8;
+  color:var(--ember-soft);
+}
+textarea#vent{
+  width:100%;
+  margin-top:14px;
+  min-height:110px;
+  resize:vertical;
+  background:var(--night-3);
+  border:1px solid var(--line);
+  border-radius:8px;
+  color:var(--ink);
+  font-family:"Zen Maru Gothic",sans-serif;
+  font-size:0.92rem;
+  line-height:1.7;
+  padding:14px;
+  outline:none;
+  transition:opacity 0.5s ease, filter 0.5s ease, border-color 0.15s ease;
+}
+textarea#vent:focus{ border-color:var(--ember); }
+textarea#vent::placeholder{ color:var(--ink-soft); opacity:0.6; }
+.vent-actions{
+  margin-top:14px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.privacy-note{
+  font-size:0.72rem;
+  color:var(--ink-soft);
+  line-height:1.6;
+  max-width:24ch;
+}
+.closing-line{
+  margin-top:16px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+  font-family:"Klee One", cursive;
+  font-size:0.92rem;
+  color:var(--ember-soft);
+  min-height:1.4em;
+}
+
+footer{
+  text-align:center;
+  font-size:0.74rem;
+  color:var(--ink-soft);
+}
+footer button{ margin-top:2px; }
+
+[hidden]{ display:none !important; }
+</style>
+</head>
+<body>
+
+<canvas id="bg" aria-hidden="true"></canvas>
+
+<div class="wrap">
+  <div class="head">
+    <div class="eyebrow">四柱推命ベース・簡易版</div>
+    <div class="title">愚痴払い暦</div>
+    <div class="tagline">生まれの気質と今日の巡りを見て、たまったモヤモヤを置いていく場所。</div>
+  </div>
+
+  <div class="panel" id="entryPanel">
+    <div class="entry-row">
+      <div class="entry-field">
+        <label for="birthInput">生年月日を教えてください</label>
+        <input type="date" id="birthInput" min="1900-01-01">
+      </div>
+      <button class="btn" id="submitBirth">この日で見る</button>
+    </div>
+  </div>
+
+  <div id="resultArea" hidden style="display:flex; flex-direction:column; gap:22px;">
+
+    <div class="talisman">
+      <div class="seal">命</div>
+      <div class="nisshu-label">あなたの日主(にっしゅ)</div>
+      <div class="nisshu-row">
+        <span class="nisshu-kanji" id="nisshuKanji">甲</span>
+        <span class="nisshu-element" id="nisshuElement">木</span>
+      </div>
+      <div class="nisshu-blurb" id="nisshuBlurb"></div>
+      <div class="pillars">
+        <div class="pillar-tag"><div class="pt-label">年柱</div><div class="pt-value" id="yearPillar">—</div></div>
+        <div class="pillar-tag"><div class="pt-label">月柱</div><div class="pt-value" id="monthPillar">—</div></div>
+        <div class="pillar-tag"><div class="pt-label">日柱</div><div class="pt-value" id="dayPillarTag">—</div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="today-head">
+        <span class="today-kanshi" id="todayKanshi">—</span>
+        <span class="relation-tag" id="relationTag">—</span>
+      </div>
+      <div class="today-comment" id="todayComment"></div>
+    </div>
+
+    <div class="panel">
+      <div class="vent-prompt" id="ventPrompt"></div>
+      <textarea id="vent" placeholder="ここに書いて、燃やして流す。誰にも見せなくていい。"></textarea>
+      <div class="vent-actions">
+        <button class="btn" id="burnBtn">お焚き上げする</button>
+        <span class="privacy-note">この文章はどこにも保存されません。ここで消えていきます。</span>
+      </div>
+      <div class="closing-line" id="closingLine"></div>
+    </div>
+
+    <footer>
+      <div>生年月日が違う場合は</div>
+      <button class="change-link" id="changeBirth">変更する</button>
+    </footer>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- ganzhi calculation (simplified, entertainment-grade) ----------
+  function mod(n,m){ return ((n%m)+m)%m; }
+  const STEMS=["甲","乙","丙","丁","戊","己","庚","辛","壬","癸"];
+  const BRANCHES=["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
+  const ELEMENTS=[
+    {name:"木", reading:"もく", color:"#7c9473"},
+    {name:"火", reading:"か",   color:"#e2793f"},
+    {name:"土", reading:"ど",   color:"#c9a25c"},
+    {name:"金", reading:"ごん", color:"#b8ad93"},
+    {name:"水", reading:"すい", color:"#6f8fa6"}
+  ];
+
+  function dayGanZhi(y,m,d){
+    const base = Date.UTC(1900,0,31);
+    const target = Date.UTC(y,m-1,d);
+    const diff = Math.round((target-base)/86400000);
+    return { stem: mod(diff,10), branch: mod(diff+4,12) };
+  }
+  function yearForCalc(y,m,d){
+    return (m<2 || (m===2 && d<4)) ? y-1 : y;
+  }
+  function yearGanZhi(y,m,d){
+    const yc = yearForCalc(y,m,d);
+    return { stem: mod(yc-1984,10), branch: mod(yc-1984,12) };
+  }
+  function monthBranchIndex(m,d){
+    const boundaries=[[1,6,1],[2,4,2],[3,6,3],[4,5,4],[5,6,5],[6,6,6],[7,7,7],[8,8,8],[9,8,9],[10,8,10],[11,8,11],[12,7,0]];
+    let result=0;
+    for(const [bm,bd,br] of boundaries){
+      if(m>bm || (m===bm && d>=bd)) result=br;
+    }
+    return result;
+  }
+  function monthGanZhi(y,m,d){
+    const yc = yearForCalc(y,m,d);
+    const ys = mod(yc-1984,10);
+    const startStem=[2,4,6,8,0][mod(ys,5)];
+    const br = monthBranchIndex(m,d);
+    const offset = mod(br-2,12);
+    return { stem: mod(startStem+offset,10), branch: br };
+  }
+  function ganZhiText(gz){ return STEMS[gz.stem]+BRANCHES[gz.branch]; }
+  function elementOf(stemIndex){ return Math.floor(stemIndex/2); }
+
+  // ---------- content ----------
+  const BLURBS = [
+    "まっすぐ伸びたい人。頭の上に何か生えてる感じがずっと気になって、たまにしなる。",
+    "しなやかに合わせるのは得意。でも気づいたら、自分の分まで誰かの日陰になっていること多め。",
+    "人前ではぱっと明るいタイプ。消灯後の充電が地味に長い。",
+    "静かに燃えてる派。気づかれにくいけど、実はずっと何かに熱くなっている。",
+    "どっしり構えて見えて、内側では地味に地殻変動が起きている。",
+    "誰かを育てるのは得意なのに、自分に肥料をあげるのを忘れがち。",
+    "白黒つけたい人。曖昧なままにされるのが、地味にストレス。",
+    "繊細に磨かれてる分、雑に扱われるとちゃんと傷が残るタイプ。",
+    "包容力があるように見えて、たまに一人で満潮になっている。",
+    "静かに染み込んでいくタイプ。誰にも気づかれずに乾いていることがある。"
+  ];
+
+  const RELATIONS = {
+    hikigo: {
+      label:"比劫・似た者", comments:[
+        "今日は自分と似たタイプに囲まれやすい日。話は早いぶん、譲れないことも増えそう。",
+        "似た者同士、わかり合えるはずなのに、なぜか張り合ってしまう日。",
+        "自分のペースを乱されがちな日。無理に合わせなくていい。"
+      ], prompts:[
+        "似たタイプの誰かに感じた、地味な張り合い。ここに置いていって。",
+        "自分と似てるからこそイラッとしたこと、書いてみて。"
+      ]
+    },
+    inju: {
+      label:"印・受け取る", comments:[
+        "今日は誰かに助けてもらえる巡り合わせ。素直に頼っていい日。",
+        "アドバイスや情報が自然と集まってくる日。取捨選択は自分次第。",
+        "エネルギーを補給できる日。一人で抱えなくていい。"
+      ], prompts:[
+        "素直に頼れなかったこと、甘えられなかったこと。",
+        "誰かに助けてもらったのに、なんかモヤッとしたこと。"
+      ]
+    },
+    shokusho: {
+      label:"食傷・与える", comments:[
+        "今日はこっちが与える側。ちょっと喋りすぎたかもって、夜に思うやつ。",
+        "アイデアも愚痴も出やすい日。溜め込んでたものが出ていく。",
+        "人のために動いたぶん、地味に消耗しやすい日。休憩は正当な権利。"
+      ], prompts:[
+        "喋りすぎた、尽くしすぎたって思うこと。",
+        "誰かのために動いて、地味に損した気がすること。"
+      ]
+    },
+    zai: {
+      label:"財・動かす", comments:[
+        "段取りが効く日。思い通りに進むぶん、雑用が増える気配もある。",
+        "お金や物を動かしたくなる日。衝動買いにはひと呼吸。",
+        "自分のペースで物事をコントロールしやすい、けど気は抜けない日。"
+      ], prompts:[
+        "お金や物にまつわる、小さいけど根深いモヤモヤ。",
+        "思い通りにいかなかった段取りへの文句。"
+      ]
+    },
+    kansatsu: {
+      label:"官殺・試される", comments:[
+        "ルールや上からの圧を感じやすい日。全部真に受けなくていい。",
+        "頑張りを試されてる気がする日。今日は及第点で十分。",
+        "予定通りいかないことに振り回されやすい。深呼吸してから動いて。"
+      ], prompts:[
+        "上の人・ルール・締切に対する愚痴、今日は解禁。",
+        "従うしかなかったことへの、ちょっとした反抗心。"
+      ]
+    }
+  };
+
+  const CLOSING_LINES = [
+    "言えてすっきりした?今日はここまで。",
+    "燃やしたら、意外と軽い。",
+    "また明日、モヤモヤがあれば持ってきて。",
+    "灰になったぶん、荷物がひとつ減った。",
+    "今日の分の愚痴、確かに受け取った。",
+    "言葉にできただけで、上出来。"
+  ];
+
+  // ---------- rng ----------
+  function xmur3(str){
+    let h = 1779033703 ^ str.length;
+    for(let i=0;i<str.length;i++){
+      h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+      h = (h << 13) | (h >>> 19);
+    }
+    return function(){
+      h = Math.imul(h ^ (h >>> 16), 2246822507);
+      h = Math.imul(h ^ (h >>> 13), 3266489909);
+      return (h ^= h >>> 16) >>> 0;
+    };
+  }
+  function mulberry32(a){
+    return function(){
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function todayKey(){
+    const d = new Date();
+    return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  }
+
+  // ---------- render ----------
+  const entryPanel = document.getElementById("entryPanel");
+  const resultArea = document.getElementById("resultArea");
+  const birthInput = document.getElementById("birthInput");
+
+  function getSavedBirth(){
+    try{ return localStorage.getItem("gucchi_birthdate") || ""; }catch(e){ return ""; }
+  }
+  function saveBirth(v){
+    try{ localStorage.setItem("gucchi_birthdate", v); }catch(e){}
+  }
+
+  function renderResult(birthStr){
+    const [by,bm,bd] = birthStr.split("-").map(Number);
+    const yp = yearGanZhi(by,bm,bd);
+    const mp = monthGanZhi(by,bm,bd);
+    const dp = dayGanZhi(by,bm,bd);
+    const dayStemIdx = dp.stem;
+    const el = ELEMENTS[elementOf(dayStemIdx)];
+
+    document.getElementById("nisshuKanji").textContent = STEMS[dayStemIdx];
+    const elEl = document.getElementById("nisshuElement");
+    elEl.textContent = el.name + "(" + el.reading + ")";
+    elEl.style.color = el.color;
+    document.getElementById("nisshuBlurb").textContent = BLURBS[dayStemIdx];
+    document.getElementById("yearPillar").textContent = ganZhiText(yp);
+    document.getElementById("monthPillar").textContent = ganZhiText(mp);
+    document.getElementById("dayPillarTag").textContent = ganZhiText(dp);
+
+    // today's relation
+    const now = new Date();
+    const tdp = dayGanZhi(now.getFullYear(), now.getMonth()+1, now.getDate());
+    const todayEl = elementOf(tdp.stem);
+    const userEl = elementOf(dayStemIdx);
+    const diff = mod(todayEl - userEl, 5);
+    const relKeyByDiff = { 0:"hikigo", 1:"shokusho", 4:"inju", 2:"zai", 3:"kansatsu" };
+    const relKey = relKeyByDiff[diff];
+    const rel = RELATIONS[relKey];
+
+    const seed = xmur3(todayKey()+"|"+birthStr);
+    const rand = mulberry32(seed());
+    const comment = rel.comments[Math.floor(rand()*rel.comments.length)];
+    const prompt = rel.prompts[Math.floor(rand()*rel.prompts.length)];
+
+    document.getElementById("todayKanshi").textContent = "今日は " + ganZhiText(tdp) + " の日";
+    document.getElementById("relationTag").textContent = rel.label;
+    document.getElementById("todayComment").textContent = comment;
+    document.getElementById("ventPrompt").textContent = prompt;
+    document.getElementById("closingLine").textContent = "";
+
+    entryPanel.hidden = true;
+    resultArea.hidden = false;
+  }
+
+  function showEntry(prefill){
+    if(prefill) birthInput.value = prefill;
+    entryPanel.hidden = false;
+    resultArea.hidden = true;
+  }
+
+  document.getElementById("submitBirth").addEventListener("click", ()=>{
+    if(!birthInput.value) return;
+    saveBirth(birthInput.value);
+    renderResult(birthInput.value);
+  });
+  document.getElementById("changeBirth").addEventListener("click", ()=>{
+    showEntry(getSavedBirth());
+  });
+
+  const saved = getSavedBirth();
+  if(saved){
+    renderResult(saved);
+  } else {
+    const d = new Date();
+    birthInput.max = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+    showEntry("");
+  }
+
+  // ---------- burn (お焚き上げ) ----------
+  const vent = document.getElementById("vent");
+  const burnBtn = document.getElementById("burnBtn");
+  const closingLine = document.getElementById("closingLine");
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  burnBtn.addEventListener("click", ()=>{
+    if(!vent.value.trim()){
+      closingLine.textContent = "何も書かれていない。思い浮かんだら、また来て。";
+      return;
+    }
+    if(!reduceMotion) spawnBurst(vent);
+    vent.style.transition = "opacity 0.5s ease, filter 0.5s ease";
+    vent.style.opacity = "0";
+    vent.style.filter = "blur(3px)";
+    setTimeout(()=>{
+      vent.value = "";
+      vent.style.opacity = "1";
+      vent.style.filter = "none";
+      closingLine.textContent = CLOSING_LINES[Math.floor(Math.random()*CLOSING_LINES.length)];
+    }, 480);
+  });
+
+  // ---------- ambient + burst embers ----------
+  const canvas = document.getElementById("bg");
+  const ctx = canvas.getContext("2d");
+  let w, h, embers;
+
+  function resize(){
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+  }
+  function clamp(n,min,max){ return Math.max(min,Math.min(max,n)); }
+
+  function makeAmbient(){
+    const count = clamp(Math.round((w*h)/70000), 10, 22);
+    return Array.from({length:count}, ()=>({
+      x: Math.random()*w,
+      y: Math.random()*h,
+      r: 1.2 + Math.random()*2.2,
+      vy: -(0.08 + Math.random()*0.14),
+      vx: (Math.random()-0.5)*0.1,
+      sway: Math.random()*Math.PI*2,
+      swaySpeed: 0.006 + Math.random()*0.008,
+      alpha: 0.12 + Math.random()*0.2,
+      color: Math.random() < 0.6 ? "230,121,63" : "201,143,92"
+    }));
+  }
+
+  embers = [];
+  let burst = [];
+
+  function spawnBurst(fromEl){
+    const rect = fromEl.getBoundingClientRect();
+    const n = 26;
+    for(let i=0;i<n;i++){
+      burst.push({
+        x: rect.left + Math.random()*rect.width,
+        y: rect.top + rect.height*(0.3+Math.random()*0.5),
+        r: 1.5 + Math.random()*2.6,
+        vy: -(0.5 + Math.random()*0.9),
+        vx: (Math.random()-0.5)*0.6,
+        life: 1,
+        decay: 0.008 + Math.random()*0.012,
+        color: Math.random() < 0.5 ? "226,121,63" : "245,180,110"
+      });
+    }
+  }
+
+  function drawFrame(animate){
+    ctx.clearRect(0,0,w,h);
+    embers.forEach(p=>{
+      p.sway += p.swaySpeed;
+      if(animate){
+        p.x += p.vx + Math.sin(p.sway)*0.12;
+        p.y += p.vy;
+        if(p.y < -10){ p.y = h+10; p.x = Math.random()*w; }
+        if(p.x > w+10) p.x = -10;
+        if(p.x < -10) p.x = w+10;
+      }
+      ctx.beginPath();
+      ctx.fillStyle = `rgba(${p.color},${p.alpha})`;
+      ctx.shadowColor = `rgba(${p.color},0.9)`;
+      ctx.shadowBlur = 6;
+      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fill();
+    });
+    if(animate && burst.length){
+      burst = burst.filter(p=>p.life>0);
+      burst.forEach(p=>{
+        p.x += p.vx; p.y += p.vy; p.vy *= 0.985; p.life -= p.decay;
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(${p.color},${clamp(p.life,0,1)})`;
+        ctx.shadowColor = `rgba(${p.color},0.95)`;
+        ctx.shadowBlur = 8;
+        ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.fill();
+      });
+    }
+    ctx.shadowBlur = 0;
+  }
+
+  function loop(){
+    drawFrame(true);
+    requestAnimationFrame(loop);
+  }
+
+  resize();
+  embers = makeAmbient();
+  if(reduceMotion){
+    drawFrame(false);
+  } else {
+    requestAnimationFrame(loop);
+  }
+  window.addEventListener("resize", ()=>{
+    resize();
+    embers = makeAmbient();
+    if(reduceMotion) drawFrame(false);
+  });
+})();
+</script>
+</body>
+</html>
