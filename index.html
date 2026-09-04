@@ -319,6 +319,19 @@ textarea#vent::placeholder{ color:var(--ink-soft); opacity:0.6; }
   min-height:1.4em;
 }
 
+.save-panel{
+  text-align:center;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.save-note{
+  font-size:0.78rem;
+  color:var(--ink-soft);
+  line-height:1.7;
+}
+#copyLinkBtn{ align-self:center; }
+
 footer{
   text-align:center;
   font-size:0.74rem;
@@ -385,6 +398,11 @@ footer button{ margin-top:2px; }
         <span class="privacy-note">この文章はどこにも保存されません。ここで消えていきます。</span>
       </div>
       <div class="closing-line" id="closingLine"></div>
+    </div>
+
+    <div class="panel save-panel">
+      <div class="save-note">ブラウザの設定によっては、生年月日が消えてしまうことがあります。<br>下のリンクをブックマークかメモしておくと、消えても同じ結果にすぐ戻れます。</div>
+      <button class="btn btn-ghost" id="copyLinkBtn">保存用リンクをコピーする</button>
     </div>
 
     <footer>
@@ -551,10 +569,22 @@ footer button{ margin-top:2px; }
   const birthInput = document.getElementById("birthInput");
 
   function getSavedBirth(){
+    try{
+      const urlBirth = new URLSearchParams(location.search).get("bd");
+      if(urlBirth && /^\d{4}-\d{2}-\d{2}$/.test(urlBirth)){
+        localStorage.setItem("gucchi_birthdate", urlBirth);
+        return urlBirth;
+      }
+    }catch(e){}
     try{ return localStorage.getItem("gucchi_birthdate") || ""; }catch(e){ return ""; }
   }
   function saveBirth(v){
     try{ localStorage.setItem("gucchi_birthdate", v); }catch(e){}
+    try{
+      const url = new URL(location.href);
+      url.searchParams.set("bd", v);
+      history.replaceState(null, "", url);
+    }catch(e){}
   }
 
   function renderResult(birthStr){
@@ -612,6 +642,21 @@ footer button{ margin-top:2px; }
   });
   document.getElementById("changeBirth").addEventListener("click", ()=>{
     showEntry(getSavedBirth());
+  });
+
+  const copyLinkBtn = document.getElementById("copyLinkBtn");
+  copyLinkBtn.addEventListener("click", async ()=>{
+    const url = new URL(location.href);
+    url.searchParams.set("bd", getSavedBirth());
+    const linkText = url.toString();
+    const originalLabel = copyLinkBtn.textContent;
+    try{
+      await navigator.clipboard.writeText(linkText);
+      copyLinkBtn.textContent = "コピーしました";
+    }catch(e){
+      window.prompt("このURLをコピーして保存してください", linkText);
+    }
+    setTimeout(()=>{ copyLinkBtn.textContent = originalLabel; }, 2200);
   });
 
   const saved = getSavedBirth();
