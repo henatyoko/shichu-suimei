@@ -317,37 +317,33 @@ textarea#vent::placeholder{ color:var(--ink-soft); opacity:0.6; }
   inset:0;
   pointer-events:none;
   overflow:hidden;
-}
-.paper-layer{
-  position:absolute;
-  inset:0;
   white-space:pre-wrap;
   word-break:break-word;
   font-family:"Zen Maru Gothic",sans-serif;
   font-size:1.2rem;
   line-height:1.6;
   padding:14px;
+  color:var(--ink);
 }
-.paper-normal{ color:var(--ink); }
-.paper-charred{
-  color:#1c1108;
-  text-shadow:0 0 4px rgba(200,80,30,0.35);
+.burn-char{
+  display:inline-block;
+  opacity:1;
 }
-.burn-edge{
-  position:absolute;
-  left:0;
-  width:100%;
-  height:26px;
-  pointer-events:none;
-  background:linear-gradient(to bottom,
-    rgba(255,210,120,0) 0%,
-    rgba(255,190,90,0.9) 35%,
-    rgba(255,110,40,0.95) 55%,
-    rgba(200,40,15,0.85) 75%,
-    rgba(120,20,10,0) 100%);
-  filter:blur(3px);
-  opacity:0;
+.burn-char.igniting{
+  animation:charBurn 2000ms linear forwards;
 }
+@keyframes charBurn{
+  /* 0-25% (~0-0.5s): wrapped in a big red flame that shrinks, position unchanged */
+  0%{   opacity:1; color:var(--ink); text-shadow:none; transform:translateY(0) scale(1); }
+  6%{   color:#ff7a3c; text-shadow:0 0 10px rgba(255,80,30,0.9), 0 0 22px rgba(255,40,10,0.75); transform:translateY(0) scale(1.05); }
+  14%{  color:#ffcf8a; text-shadow:0 0 16px rgba(255,150,60,1), 0 0 34px rgba(230,50,15,0.9), 0 0 54px rgba(180,20,10,0.55); transform:translateY(0) scale(1.07); }
+  25%{  color:#f0973f; text-shadow:0 0 8px rgba(226,121,63,0.7), 0 0 16px rgba(190,70,25,0.4); transform:translateY(0) scale(1); opacity:1; }
+  /* 25-100% (~1.5s): weak flame, charring to ash, rising away and dissolving */
+  55%{  color:#6b3420; text-shadow:0 0 5px rgba(200,90,40,0.4); transform:translateY(-50%) scale(0.95); opacity:0.7; }
+  80%{  color:#2a1a12; text-shadow:0 0 2px rgba(120,50,20,0.2); transform:translateY(-100%) scale(0.86); opacity:0.3; }
+  100%{ color:#150d08; text-shadow:none; transform:translateY(-170%) scale(0.72); opacity:0; }
+}
+@media (prefers-reduced-motion: reduce){ .burn-char.igniting{ animation:none; opacity:0; } }
 .vent-actions{
   margin-top:14px;
   display:flex;
@@ -758,102 +754,57 @@ footer button{ margin-top:2px; }
 
     const text = vent.value;
     const rect = vent.getBoundingClientRect();
-    const rectW = rect.width, rectH = rect.height;
-
     const overlay = document.createElement("div");
     overlay.className = "burn-overlay";
-    const paperNormal = document.createElement("div");
-    paperNormal.className = "paper-layer paper-normal";
-    paperNormal.textContent = text;
-    const paperCharred = document.createElement("div");
-    paperCharred.className = "paper-layer paper-charred";
-    paperCharred.textContent = text;
-    const burnEdge = document.createElement("div");
-    burnEdge.className = "burn-edge";
-    overlay.appendChild(paperNormal);
-    overlay.appendChild(paperCharred);
-    overlay.appendChild(burnEdge);
+
+    const spans = text.split("").map(ch=>{
+      const span = document.createElement("span");
+      span.className = "burn-char";
+      span.textContent = ch;
+      overlay.appendChild(span);
+      return span;
+    });
     ventStage.appendChild(overlay);
     vent.style.opacity = "0";
 
-    // big panel-wide flash + glow + shake to sell the ignition moment
+    // big panel-wide flash + glow + shake, not just per-character glyphs
     retrigger(burnGlow, "flash");
     retrigger(screenFlash, "flash");
     retrigger(ventStage, "shaking");
-    spawnShockwave({left:rect.left, top:rect.top+rectH-18, width:rectW, height:18}, 22);
+    spawnShockwave(rect);
+    setTimeout(()=> spawnShockwave(rect, 16), 120);
 
-    // a jagged, irregular burnt edge instead of a perfectly straight line
-    const SEGMENTS = 10;
-    const JAG = 12;
-    const edgeOffsets = Array.from({length:SEGMENTS+1}, ()=> (Math.random()-0.5)*2*JAG);
+    const DURATION = 2000; // 0.5s ignite + 1.5s char-and-rise, per user spec
+    let maxDelay = 0;
 
-    const SWEEP = 1150;  // paper burns from bottom to top
-    const HOLD = 150;    // fully charred, briefly smoldering
-    const FADE = 600;    // charred paper crumbles away
-    const TOTAL = SWEEP + HOLD + FADE;
+    spans.forEach((span,i)=>{
+      const delay = Math.random()*60; // slight flicker desync, not a left-to-right sweep
+      maxDelay = Math.max(maxDelay, delay);
+      span.style.animationDelay = delay+"ms";
+      span.classList.add("igniting");
 
-    const start = performance.now();
-    let lastSpawn = 0;
-
-    function edgePoints(baseY){
-      return edgeOffsets.map((off,i)=>{
-        const x = (i/SEGMENTS)*rectW;
-        const y = Math.max(0, Math.min(rectH, baseY+off));
-        return {x,y};
-      });
-    }
-
-    function frame(now){
-      const t = now - start;
-
-      if(t < SWEEP){
-        const progress = t/SWEEP;
-        const baseY = rectH*(1-progress);
-        const pts = edgePoints(baseY);
-        const fwd = pts.map(p=>`${p.x}px ${p.y}px`).join(", ");
-        const rev = pts.slice().reverse().map(p=>`${p.x}px ${p.y}px`).join(", ");
-        paperNormal.style.clipPath = `polygon(0px 0px, ${rectW}px 0px, ${rev})`;
-        paperCharred.style.clipPath = `polygon(0px ${rectH}px, ${rectW}px ${rectH}px, ${fwd})`;
-        burnEdge.style.top = (baseY-13)+"px";
-        burnEdge.style.opacity = "1";
-
-        if(t-lastSpawn > 55){
-          lastSpawn = t;
-          const gx = rect.left + Math.random()*rectW;
-          const seg = Math.min(SEGMENTS-1, Math.floor((gx-rect.left)/rectW*SEGMENTS));
-          const localY = edgePoints(baseY)[seg].y;
-          const gy = rect.top + localY;
-          if(Math.random() < 0.7) spawnDustAt(gx, gy, 2);
-          else spawnBurstAt(gx, gy, 2);
-        }
-        requestAnimationFrame(frame);
-      } else if(t < SWEEP+HOLD){
-        requestAnimationFrame(frame);
-      } else if(t < TOTAL){
-        const p = (t-SWEEP-HOLD)/FADE;
-        overlay.style.opacity = String(Math.max(0,1-p));
-        burnEdge.style.opacity = String(Math.max(0,0.6-p*0.6));
-        if(t-lastSpawn > 90){
-          lastSpawn = t;
-          spawnDustAt(rect.left+Math.random()*rectW, rect.top+Math.random()*rectH, 2);
-        }
-        requestAnimationFrame(frame);
-      } else {
-        overlay.remove();
-        finishBurn();
+      if(i % 2 === 0){
+        // ignition whoosh, timed to the big-flame peak
+        setTimeout(()=>{
+          const r = span.getBoundingClientRect();
+          spawnBurstAt(r.left + r.width/2, r.top + r.height/2, 7);
+        }, delay + 180);
+        // crumbling into ash dots while it rises away
+        setTimeout(()=>{
+          const r = span.getBoundingClientRect();
+          spawnDustAt(r.left + r.width/2, r.top + r.height/2, 5);
+        }, delay + 950);
+        setTimeout(()=>{
+          const r = span.getBoundingClientRect();
+          spawnDustAt(r.left + r.width/2, r.top + r.height/2, 5);
+        }, delay + 1500);
       }
-    }
-    requestAnimationFrame(frame);
+    });
 
-    // rAF pauses while the tab is backgrounded; make sure burning still
-    // completes (instead of leaving the button stuck disabled) if the
-    // user switches away mid-animation and comes back much later.
     setTimeout(()=>{
-      if(overlay.isConnected){
-        overlay.remove();
-        finishBurn();
-      }
-    }, TOTAL + 4000);
+      overlay.remove();
+      finishBurn();
+    }, maxDelay + DURATION + 100);
   }
 
   function retrigger(el, className){
