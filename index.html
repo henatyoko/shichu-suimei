@@ -247,6 +247,7 @@ canvas#bg{
   line-height:1.8;
   color:var(--ember-soft);
 }
+.vent-stage{ position:relative; }
 textarea#vent{
   width:100%;
   margin-top:14px;
@@ -261,10 +262,39 @@ textarea#vent{
   line-height:1.7;
   padding:14px;
   outline:none;
-  transition:opacity 0.5s ease, filter 0.5s ease, border-color 0.15s ease;
+  transition:opacity 0.4s ease, border-color 0.15s ease;
 }
 textarea#vent:focus{ border-color:var(--ember); }
 textarea#vent::placeholder{ color:var(--ink-soft); opacity:0.6; }
+
+.burn-overlay{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  overflow:hidden;
+  white-space:pre-wrap;
+  word-break:break-word;
+  font-family:"Zen Maru Gothic",sans-serif;
+  font-size:0.92rem;
+  line-height:1.7;
+  padding:14px;
+  color:var(--ink);
+}
+.burn-char{
+  display:inline-block;
+  opacity:1;
+}
+.burn-char.igniting{
+  animation:charBurn 0.85s ease-in forwards;
+}
+@keyframes charBurn{
+  0%{ opacity:1; color:var(--ink); text-shadow:none; transform:translateY(0) scale(1); filter:blur(0); }
+  20%{ color:#ffe3b0; text-shadow:0 0 5px rgba(255,200,140,0.9); }
+  45%{ color:#f0973f; text-shadow:0 0 12px rgba(226,121,63,0.95); transform:translateY(-1px) scale(1.03); }
+  70%{ color:#8a3a20; text-shadow:0 0 6px rgba(160,60,20,0.6); opacity:0.85; transform:translateY(-5px) scale(0.97); }
+  100%{ opacity:0; color:#2a1608; text-shadow:none; transform:translateY(-14px) scale(0.8); filter:blur(2px); }
+}
+@media (prefers-reduced-motion: reduce){ .burn-char.igniting{ animation:none; opacity:0; } }
 .vent-actions{
   margin-top:14px;
   display:flex;
@@ -347,7 +377,9 @@ footer button{ margin-top:2px; }
 
     <div class="panel">
       <div class="vent-prompt" id="ventPrompt"></div>
-      <textarea id="vent" placeholder="ここに書いて、燃やして流す。誰にも見せなくていい。"></textarea>
+      <div class="vent-stage">
+        <textarea id="vent" placeholder="ここに書いて、燃やして流す。誰にも見せなくていい。"></textarea>
+      </div>
       <div class="vent-actions">
         <button class="btn" id="burnBtn">お焚き上げする</button>
         <span class="privacy-note">この文章はどこにも保存されません。ここで消えていきます。</span>
@@ -593,26 +625,72 @@ footer button{ margin-top:2px; }
 
   // ---------- burn (お焚き上げ) ----------
   const vent = document.getElementById("vent");
+  const ventStage = document.querySelector(".vent-stage");
   const burnBtn = document.getElementById("burnBtn");
   const closingLine = document.getElementById("closingLine");
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   burnBtn.addEventListener("click", ()=>{
+    if(burnBtn.disabled) return;
     if(!vent.value.trim()){
       closingLine.textContent = "何も書かれていない。思い浮かんだら、また来て。";
       return;
     }
-    if(!reduceMotion) spawnBurst(vent);
-    vent.style.transition = "opacity 0.5s ease, filter 0.5s ease";
-    vent.style.opacity = "0";
-    vent.style.filter = "blur(3px)";
-    setTimeout(()=>{
-      vent.value = "";
-      vent.style.opacity = "1";
-      vent.style.filter = "none";
-      closingLine.textContent = CLOSING_LINES[Math.floor(Math.random()*CLOSING_LINES.length)];
-    }, 480);
+    burnVent();
   });
+
+  function finishBurn(){
+    vent.value = "";
+    vent.style.opacity = "1";
+    burnBtn.disabled = false;
+    closingLine.textContent = CLOSING_LINES[Math.floor(Math.random()*CLOSING_LINES.length)];
+  }
+
+  function burnVent(){
+    burnBtn.disabled = true;
+
+    if(reduceMotion){
+      finishBurn();
+      return;
+    }
+
+    const text = vent.value;
+    const rect = vent.getBoundingClientRect();
+    const overlay = document.createElement("div");
+    overlay.className = "burn-overlay";
+
+    const spans = text.split("").map(ch=>{
+      const span = document.createElement("span");
+      span.className = "burn-char";
+      span.textContent = ch;
+      overlay.appendChild(span);
+      return span;
+    });
+    ventStage.appendChild(overlay);
+    vent.style.opacity = "0";
+
+    let maxDelay = 0;
+    spans.forEach((span,i)=>{
+      const delay = i*12 + Math.random()*100;
+      maxDelay = Math.max(maxDelay, delay);
+      span.style.animationDelay = delay+"ms";
+      span.classList.add("igniting");
+      if(i % 3 === 0){
+        setTimeout(()=>{
+          spawnBurstAt(
+            rect.left + Math.random()*rect.width,
+            rect.top + rect.height*(0.2+Math.random()*0.6),
+            5
+          );
+        }, delay);
+      }
+    });
+
+    setTimeout(()=>{
+      overlay.remove();
+      finishBurn();
+    }, maxDelay + 950);
+  }
 
   // ---------- ambient + burst embers ----------
   const canvas = document.getElementById("bg");
@@ -643,13 +721,12 @@ footer button{ margin-top:2px; }
   embers = [];
   let burst = [];
 
-  function spawnBurst(fromEl){
-    const rect = fromEl.getBoundingClientRect();
-    const n = 26;
+  function spawnBurstAt(x,y,count){
+    const n = count || 6;
     for(let i=0;i<n;i++){
       burst.push({
-        x: rect.left + Math.random()*rect.width,
-        y: rect.top + rect.height*(0.3+Math.random()*0.5),
+        x: x + (Math.random()-0.5)*8,
+        y: y + (Math.random()-0.5)*6,
         r: 1.5 + Math.random()*2.6,
         vy: -(0.5 + Math.random()*0.9),
         vx: (Math.random()-0.5)*0.6,
