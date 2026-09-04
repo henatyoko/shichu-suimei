@@ -249,6 +249,7 @@ canvas#bg{
 }
 .vent-stage{ position:relative; }
 textarea#vent{
+  display:block;
   width:100%;
   margin-top:14px;
   min-height:110px;
@@ -262,7 +263,7 @@ textarea#vent{
   line-height:1.7;
   padding:14px;
   outline:none;
-  transition:opacity 0.4s ease, border-color 0.15s ease;
+  transition:opacity 0.12s ease, border-color 0.15s ease;
 }
 textarea#vent:focus{ border-color:var(--ember); }
 textarea#vent::placeholder{ color:var(--ink-soft); opacity:0.6; }
@@ -285,14 +286,18 @@ textarea#vent::placeholder{ color:var(--ink-soft); opacity:0.6; }
   opacity:1;
 }
 .burn-char.igniting{
-  animation:charBurn 0.85s ease-in forwards;
+  animation:charBurn 2000ms linear forwards;
 }
 @keyframes charBurn{
-  0%{ opacity:1; color:var(--ink); text-shadow:none; transform:translateY(0) scale(1); filter:blur(0); }
-  20%{ color:#ffe3b0; text-shadow:0 0 5px rgba(255,200,140,0.9); }
-  45%{ color:#f0973f; text-shadow:0 0 12px rgba(226,121,63,0.95); transform:translateY(-1px) scale(1.03); }
-  70%{ color:#8a3a20; text-shadow:0 0 6px rgba(160,60,20,0.6); opacity:0.85; transform:translateY(-5px) scale(0.97); }
-  100%{ opacity:0; color:#2a1608; text-shadow:none; transform:translateY(-14px) scale(0.8); filter:blur(2px); }
+  /* 0-25% (~0-0.5s): wrapped in a big red flame that shrinks, position unchanged */
+  0%{   opacity:1; color:var(--ink); text-shadow:none; transform:translateY(0) scale(1); }
+  6%{   color:#ff7a3c; text-shadow:0 0 10px rgba(255,80,30,0.9), 0 0 22px rgba(255,40,10,0.75); transform:translateY(0) scale(1.05); }
+  14%{  color:#ffcf8a; text-shadow:0 0 16px rgba(255,150,60,1), 0 0 34px rgba(230,50,15,0.9), 0 0 54px rgba(180,20,10,0.55); transform:translateY(0) scale(1.07); }
+  25%{  color:#f0973f; text-shadow:0 0 8px rgba(226,121,63,0.7), 0 0 16px rgba(190,70,25,0.4); transform:translateY(0) scale(1); opacity:1; }
+  /* 25-100% (~1.5s): weak flame, charring to ash, rising away and dissolving */
+  55%{  color:#6b3420; text-shadow:0 0 5px rgba(200,90,40,0.4); transform:translateY(-50%) scale(0.95); opacity:0.7; }
+  80%{  color:#2a1a12; text-shadow:0 0 2px rgba(120,50,20,0.2); transform:translateY(-100%) scale(0.86); opacity:0.3; }
+  100%{ color:#150d08; text-shadow:none; transform:translateY(-170%) scale(0.72); opacity:0; }
 }
 @media (prefers-reduced-motion: reduce){ .burn-char.igniting{ animation:none; opacity:0; } }
 .vent-actions{
@@ -714,27 +719,37 @@ footer button{ margin-top:2px; }
     ventStage.appendChild(overlay);
     vent.style.opacity = "0";
 
+    const DURATION = 2000; // 0.5s ignite + 1.5s char-and-rise, per user spec
     let maxDelay = 0;
+
     spans.forEach((span,i)=>{
-      const delay = i*12 + Math.random()*100;
+      const delay = Math.random()*60; // slight flicker desync, not a left-to-right sweep
       maxDelay = Math.max(maxDelay, delay);
       span.style.animationDelay = delay+"ms";
       span.classList.add("igniting");
+
       if(i % 3 === 0){
+        // ignition whoosh, timed to the big-flame peak
         setTimeout(()=>{
-          spawnBurstAt(
-            rect.left + Math.random()*rect.width,
-            rect.top + rect.height*(0.2+Math.random()*0.6),
-            5
-          );
-        }, delay);
+          const r = span.getBoundingClientRect();
+          spawnBurstAt(r.left + r.width/2, r.top + r.height/2, 4);
+        }, delay + 180);
+        // crumbling into ash dots while it rises away
+        setTimeout(()=>{
+          const r = span.getBoundingClientRect();
+          spawnDustAt(r.left + r.width/2, r.top + r.height/2, 3);
+        }, delay + 950);
+        setTimeout(()=>{
+          const r = span.getBoundingClientRect();
+          spawnDustAt(r.left + r.width/2, r.top + r.height/2, 3);
+        }, delay + 1500);
       }
     });
 
     setTimeout(()=>{
       overlay.remove();
       finishBurn();
-    }, maxDelay + 950);
+    }, maxDelay + DURATION + 100);
   }
 
   // ---------- ambient + burst embers ----------
@@ -778,6 +793,22 @@ footer button{ margin-top:2px; }
         life: 1,
         decay: 0.008 + Math.random()*0.012,
         color: Math.random() < 0.5 ? "226,121,63" : "245,180,110"
+      });
+    }
+  }
+
+  function spawnDustAt(x,y,count){
+    const n = count || 3;
+    for(let i=0;i<n;i++){
+      burst.push({
+        x: x + (Math.random()-0.5)*10,
+        y: y + (Math.random()-0.5)*8,
+        r: 1 + Math.random()*1.7,
+        vy: -(0.3 + Math.random()*0.5),
+        vx: (Math.random()-0.5)*0.35,
+        life: 1,
+        decay: 0.013 + Math.random()*0.015,
+        color: Math.random() < 0.5 ? "90,72,60" : "45,34,28"
       });
     }
   }
