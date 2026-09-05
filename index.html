@@ -294,15 +294,16 @@ textarea#vent::placeholder{ color:var(--ink-soft); opacity:0.6; }
   animation:charBurn 2000ms linear forwards;
 }
 @keyframes charBurn{
-  /* 0-25% (~0-0.5s): wrapped in a big red flame that shrinks, position unchanged */
+  /* 0-25% (~0-0.5s): a bigger poof of red flame, position unchanged */
   0%{   opacity:1; color:var(--ink); text-shadow:none; transform:translateY(0) scale(1); }
-  6%{   color:#ff7a3c; text-shadow:0 0 10px rgba(255,80,30,0.9), 0 0 22px rgba(255,40,10,0.75); transform:translateY(0) scale(1.05); }
-  14%{  color:#ffcf8a; text-shadow:0 0 16px rgba(255,150,60,1), 0 0 34px rgba(230,50,15,0.9), 0 0 54px rgba(180,20,10,0.55); transform:translateY(0) scale(1.07); }
-  25%{  color:#f0973f; text-shadow:0 0 8px rgba(226,121,63,0.7), 0 0 16px rgba(190,70,25,0.4); transform:translateY(0) scale(1); opacity:1; }
-  /* 25-100% (~1.5s): weak flame, charring to ash, rising away and dissolving */
-  55%{  color:#6b3420; text-shadow:0 0 5px rgba(200,90,40,0.4); transform:translateY(-50%) scale(0.95); opacity:0.7; }
-  80%{  color:#2a1a12; text-shadow:0 0 2px rgba(120,50,20,0.2); transform:translateY(-100%) scale(0.86); opacity:0.3; }
-  100%{ color:#150d08; text-shadow:none; transform:translateY(-170%) scale(0.72); opacity:0; }
+  6%{   color:#ff7a3c; text-shadow:0 0 14px rgba(255,80,30,0.95), 0 0 32px rgba(255,40,10,0.8); transform:translateY(0) scale(1.12); }
+  14%{  color:#ffd79a; text-shadow:0 0 22px rgba(255,160,70,1), 0 0 46px rgba(230,50,15,0.95), 0 0 74px rgba(180,20,10,0.6); transform:translateY(0) scale(1.24); }
+  25%{  color:#f0973f; text-shadow:0 0 10px rgba(226,121,63,0.7), 0 0 20px rgba(190,70,25,0.4); transform:translateY(0) scale(1.02); opacity:1; }
+  /* 25-100% (~1.5s): smolders in place, then shoots up and shrinks away fast */
+  45%{  color:#9a4c28; text-shadow:0 0 6px rgba(200,90,40,0.4); transform:translateY(-6%) scale(0.98); opacity:0.85; }
+  62%{  color:#4a2415; text-shadow:0 0 4px rgba(160,60,20,0.3); transform:translateY(-22%) scale(0.85); opacity:0.6; }
+  80%{  color:#201209; text-shadow:0 0 2px rgba(120,50,20,0.15); transform:translateY(-90%) scale(0.55); opacity:0.28; }
+  100%{ color:#0f0906; text-shadow:none; transform:translateY(-230%) scale(0.22); opacity:0; }
 }
 @media (prefers-reduced-motion: reduce){ .burn-char.igniting{ animation:none; opacity:0; } }
 .vent-actions{
