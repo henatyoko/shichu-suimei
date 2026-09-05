@@ -244,6 +244,10 @@ canvas#bg{
   font-family:"Klee One", cursive;
   color:var(--ink);
 }
+.share-btn{
+  margin-top:16px;
+  width:100%;
+}
 
 /* vent */
 .vent-prompt{
@@ -398,6 +402,7 @@ footer button{ margin-top:2px; }
         <span class="relation-tag" id="relationTag">—</span>
       </div>
       <div class="today-comment" id="todayComment"></div>
+      <button class="btn btn-ghost share-btn" id="shareXBtn">𝕏で共有する</button>
     </div>
 
     <div class="panel">
@@ -638,9 +643,17 @@ footer button{ margin-top:2px; }
     document.getElementById("ventPrompt").textContent = prompt;
     document.getElementById("closingLine").textContent = "";
 
+    currentShareData = {
+      nisshuKanji: STEMS[dayStemIdx],
+      elementName: el.name,
+      todayKanshiText: ganZhiText(tdp),
+      relationLabel: rel.label
+    };
+
     entryPanel.hidden = true;
     resultArea.hidden = false;
   }
+  let currentShareData = null;
 
   function showEntry(prefill){
     if(prefill) birthInput.value = prefill;
@@ -670,6 +683,16 @@ footer button{ margin-top:2px; }
       window.prompt("このURLをコピーして保存してください", linkText);
     }
     setTimeout(()=>{ copyLinkBtn.textContent = originalLabel; }, 2200);
+  });
+
+  const shareXBtn = document.getElementById("shareXBtn");
+  shareXBtn.addEventListener("click", ()=>{
+    if(!currentShareData) return;
+    const { nisshuKanji, elementName, todayKanshiText, relationLabel } = currentShareData;
+    const text = "わたしの日主は"+nisshuKanji+"("+elementName+")。今日は"+todayKanshiText+"、"+relationLabel+"の巡り。\n愚痴払い暦で診断→";
+    const shareUrl = location.origin + location.pathname;
+    const intentUrl = "https://twitter.com/intent/tweet?text="+encodeURIComponent(text)+"&url="+encodeURIComponent(shareUrl);
+    window.open(intentUrl, "_blank", "noopener,noreferrer");
   });
 
   const saved = getSavedBirth();
