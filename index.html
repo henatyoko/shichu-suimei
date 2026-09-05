@@ -170,6 +170,11 @@ canvas#bg{
   color:var(--talisman-ink-soft);
   text-transform:uppercase;
 }
+.birth-note{
+  margin-top:4px;
+  font-size:0.76rem;
+  color:var(--talisman-ink-soft);
+}
 .nisshu-row{
   display:flex;
   align-items:baseline;
@@ -373,6 +378,7 @@ footer button{ margin-top:2px; }
     <div class="talisman">
       <div class="seal">命</div>
       <div class="nisshu-label">あなたの日主(にっしゅ)</div>
+      <div class="birth-note" id="birthNote"></div>
       <div class="nisshu-row">
         <span class="nisshu-kanji" id="nisshuKanji">甲</span>
         <span class="nisshu-element" id="nisshuElement">木</span>
@@ -600,6 +606,7 @@ footer button{ margin-top:2px; }
     const dayStemIdx = dp.stem;
     const el = ELEMENTS[elementOf(dayStemIdx)];
 
+    document.getElementById("birthNote").textContent = by+"年"+bm+"月"+bd+"日生まれ";
     document.getElementById("nisshuKanji").textContent = STEMS[dayStemIdx];
     const elEl = document.getElementById("nisshuElement");
     elEl.textContent = el.name + "(" + el.reading + ")";
