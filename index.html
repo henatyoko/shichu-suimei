@@ -265,7 +265,7 @@ textarea#vent{
   color:var(--ink);
   font-family:"Zen Maru Gothic",sans-serif;
   font-size:1.2rem;
-  line-height:2.2;
+  line-height:2.5;
   padding:14px;
   outline:none;
   transition:opacity 0.12s ease, border-color 0.15s ease;
@@ -282,7 +282,7 @@ textarea#vent::placeholder{ color:var(--ink-soft); opacity:0.6; }
   word-break:break-word;
   font-family:"Zen Maru Gothic",sans-serif;
   font-size:1.2rem;
-  line-height:2.2;
+  line-height:2.5;
   padding:14px;
   color:var(--ink);
 }
@@ -296,9 +296,9 @@ textarea#vent::placeholder{ color:var(--ink-soft); opacity:0.6; }
 @keyframes charBurn{
   /* 0-25% (~0-0.5s): a bigger poof of red flame, position unchanged */
   0%{   opacity:1; color:var(--ink); text-shadow:none; transform:translateY(0) scale(1); }
-  6%{   color:#ff7a3c; text-shadow:0 0 24px rgba(255,80,30,0.95), 0 0 56px rgba(255,40,10,0.8); transform:translateY(0) scale(1.35); }
-  14%{  color:#ffd79a; text-shadow:0 0 40px rgba(255,160,70,1), 0 0 82px rgba(230,50,15,0.95), 0 0 130px rgba(180,20,10,0.6); transform:translateY(0) scale(1.55); }
-  25%{  color:#f0973f; text-shadow:0 0 16px rgba(226,121,63,0.7), 0 0 32px rgba(190,70,25,0.4); transform:translateY(0) scale(1.05); opacity:1; }
+  6%{   color:#ff7a3c; text-shadow:0 0 12px rgba(255,80,30,0.95), 0 0 26px rgba(255,40,10,0.8); transform:translateY(0) scale(1.3); }
+  14%{  color:#ffd79a; text-shadow:0 0 18px rgba(255,160,70,1), 0 0 34px rgba(230,50,15,0.95), 0 0 52px rgba(180,20,10,0.6); transform:translateY(0) scale(1.45); }
+  25%{  color:#f0973f; text-shadow:0 0 9px rgba(226,121,63,0.7), 0 0 18px rgba(190,70,25,0.4); transform:translateY(0) scale(1.03); opacity:1; }
   /* 25-100% (~1.5s): smolders in place, then shoots up and shrinks away fast */
   45%{  color:#9a4c28; text-shadow:0 0 6px rgba(200,90,40,0.4); transform:translateY(-6%) scale(0.98); opacity:0.85; }
   62%{  color:#4a2415; text-shadow:0 0 4px rgba(160,60,20,0.3); transform:translateY(-22%) scale(0.85); opacity:0.6; }
