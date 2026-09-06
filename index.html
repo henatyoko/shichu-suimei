@@ -170,11 +170,6 @@ canvas#bg{
   color:var(--talisman-ink-soft);
   text-transform:uppercase;
 }
-.birth-note{
-  margin-top:4px;
-  font-size:0.76rem;
-  color:var(--talisman-ink-soft);
-}
 .nisshu-row{
   display:flex;
   align-items:baseline;
@@ -244,10 +239,6 @@ canvas#bg{
   font-family:"Klee One", cursive;
   color:var(--ink);
 }
-.share-btn{
-  margin-top:16px;
-  width:100%;
-}
 
 /* vent */
 .vent-prompt{
@@ -256,60 +247,24 @@ canvas#bg{
   line-height:1.8;
   color:var(--ember-soft);
 }
-.vent-stage{ position:relative; }
 textarea#vent{
-  display:block;
   width:100%;
   margin-top:14px;
-  min-height:130px;
+  min-height:110px;
   resize:vertical;
   background:var(--night-3);
   border:1px solid var(--line);
   border-radius:8px;
   color:var(--ink);
   font-family:"Zen Maru Gothic",sans-serif;
-  font-size:1.2rem;
-  line-height:2.5;
+  font-size:0.92rem;
+  line-height:1.7;
   padding:14px;
   outline:none;
-  transition:opacity 0.12s ease, border-color 0.15s ease;
+  transition:opacity 0.5s ease, filter 0.5s ease, border-color 0.15s ease;
 }
 textarea#vent:focus{ border-color:var(--ember); }
 textarea#vent::placeholder{ color:var(--ink-soft); opacity:0.6; }
-
-.burn-overlay{
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-  overflow:hidden;
-  white-space:pre-wrap;
-  word-break:break-word;
-  font-family:"Zen Maru Gothic",sans-serif;
-  font-size:1.2rem;
-  line-height:2.5;
-  padding:14px;
-  color:var(--ink);
-}
-.burn-char{
-  display:inline-block;
-  opacity:1;
-}
-.burn-char.igniting{
-  animation:charBurn 2000ms linear forwards;
-}
-@keyframes charBurn{
-  /* 0-25% (~0-0.5s): a bigger poof of red flame, position unchanged */
-  0%{   opacity:1; color:var(--ink); text-shadow:none; transform:translateY(0) scale(1); }
-  6%{   color:#ff7a3c; text-shadow:0 0 12px rgba(255,80,30,0.95), 0 0 26px rgba(255,40,10,0.8); transform:translateY(0) scale(1.3); }
-  14%{  color:#ffd79a; text-shadow:0 0 18px rgba(255,160,70,1), 0 0 34px rgba(230,50,15,0.95), 0 0 52px rgba(180,20,10,0.6); transform:translateY(0) scale(1.45); }
-  25%{  color:#f0973f; text-shadow:0 0 9px rgba(226,121,63,0.7), 0 0 18px rgba(190,70,25,0.4); transform:translateY(0) scale(1.03); opacity:1; }
-  /* 25-100% (~1.5s): smolders in place, then shoots up and shrinks away fast */
-  45%{  color:#9a4c28; text-shadow:0 0 6px rgba(200,90,40,0.4); transform:translateY(-6%) scale(0.98); opacity:0.85; }
-  62%{  color:#4a2415; text-shadow:0 0 4px rgba(160,60,20,0.3); transform:translateY(-22%) scale(0.85); opacity:0.6; }
-  80%{  color:#201209; text-shadow:0 0 2px rgba(120,50,20,0.15); transform:translateY(-90%) scale(0.55); opacity:0.28; }
-  100%{ color:#0f0906; text-shadow:none; transform:translateY(-230%) scale(0.22); opacity:0; }
-}
-@media (prefers-reduced-motion: reduce){ .burn-char.igniting{ animation:none; opacity:0; } }
 .vent-actions{
   margin-top:14px;
   display:flex;
@@ -334,25 +289,20 @@ textarea#vent::placeholder{ color:var(--ink-soft); opacity:0.6; }
   min-height:1.4em;
 }
 
-.save-panel{
-  text-align:center;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-}
-.save-note{
-  font-size:0.78rem;
-  color:var(--ink-soft);
-  line-height:1.7;
-}
-#copyLinkBtn{ align-self:center; }
-
 footer{
   text-align:center;
   font-size:0.74rem;
   color:var(--ink-soft);
+  display:flex;
+  flex-direction:column;
+  gap:10px;
 }
 footer button{ margin-top:2px; }
+.disclaimer{
+  font-size:0.68rem;
+  color:var(--ink-soft);
+  opacity:0.75;
+}
 
 [hidden]{ display:none !important; }
 </style>
@@ -363,7 +313,7 @@ footer button{ margin-top:2px; }
 
 <div class="wrap">
   <div class="head">
-    <div class="eyebrow">四柱推命ベース・簡易版</div>
+    <div class="eyebrow">四柱推命ベース</div>
     <div class="title">愚痴払い暦</div>
     <div class="tagline">生まれの気質と今日の巡りを見て、たまったモヤモヤを置いていく場所。</div>
   </div>
@@ -383,7 +333,6 @@ footer button{ margin-top:2px; }
     <div class="talisman">
       <div class="seal">命</div>
       <div class="nisshu-label">あなたの日主(にっしゅ)</div>
-      <div class="birth-note" id="birthNote"></div>
       <div class="nisshu-row">
         <span class="nisshu-kanji" id="nisshuKanji">甲</span>
         <span class="nisshu-element" id="nisshuElement">木</span>
@@ -402,14 +351,11 @@ footer button{ margin-top:2px; }
         <span class="relation-tag" id="relationTag">—</span>
       </div>
       <div class="today-comment" id="todayComment"></div>
-      <button class="btn btn-ghost share-btn" id="shareXBtn">𝕏で共有する</button>
     </div>
 
     <div class="panel">
       <div class="vent-prompt" id="ventPrompt"></div>
-      <div class="vent-stage">
-        <textarea id="vent" placeholder="ここに書いて、燃やして流す。誰にも見せなくていい。"></textarea>
-      </div>
+      <textarea id="vent" placeholder="ここに書いて、燃やして流す。誰にも見せなくていい。"></textarea>
       <div class="vent-actions">
         <button class="btn" id="burnBtn">お焚き上げする</button>
         <span class="privacy-note">この文章はどこにも保存されません。ここで消えていきます。</span>
@@ -417,14 +363,12 @@ footer button{ margin-top:2px; }
       <div class="closing-line" id="closingLine"></div>
     </div>
 
-    <div class="panel save-panel">
-      <div class="save-note">ブラウザの設定によっては、生年月日が消えてしまうことがあります。<br>下のリンクをブックマークかメモしておくと、消えても同じ結果にすぐ戻れます。</div>
-      <button class="btn btn-ghost" id="copyLinkBtn">保存用リンクをコピーする</button>
-    </div>
-
     <footer>
-      <div>生年月日が違う場合は</div>
-      <button class="change-link" id="changeBirth">変更する</button>
+      <div>
+        <div>生年月日が違う場合は</div>
+        <button class="change-link" id="changeBirth">変更する</button>
+      </div>
+      <div class="disclaimer">※二十四節気を簡略化した独自計算です。正式な鑑定とは異なる場合があります。</div>
     </footer>
   </div>
 </div>
@@ -479,78 +423,111 @@ footer button{ margin-top:2px; }
 
   // ---------- content ----------
   const BLURBS = [
-    "まっすぐ伸びたい人。頭の上に何か生えてる感じがずっと気になって、たまにしなる。",
-    "しなやかに合わせるのは得意。でも気づいたら、自分の分まで誰かの日陰になっていること多め。",
-    "人前ではぱっと明るいタイプ。消灯後の充電が地味に長い。",
-    "静かに燃えてる派。気づかれにくいけど、実はずっと何かに熱くなっている。",
-    "どっしり構えて見えて、内側では地味に地殻変動が起きている。",
-    "誰かを育てるのは得意なのに、自分に肥料をあげるのを忘れがち。",
-    "白黒つけたい人。曖昧なままにされるのが、地味にストレス。",
-    "繊細に磨かれてる分、雑に扱われるとちゃんと傷が残るタイプ。",
-    "包容力があるように見えて、たまに一人で満潮になっている。",
-    "静かに染み込んでいくタイプ。誰にも気づかれずに乾いていることがある。"
+    "まっすぐ育ちたいタイプ。なのに頭上には謎の枝葉(だいたい他人の期待)が生い茂ってて、地味に鬱陶しい。折れないのが取り柄だけど、たまに「もう少し曲がってもいいのでは」と自分でツッコむ日がある。",
+    "風が吹けばしなり、誰かが困ってれば巻きつく、柔軟性の権化。ただし気づけば自分の分の日当たりまで誰かに譲っていて、夜になってから「あれ、私は?」となる癖がある。",
+    "登場した瞬間に場が明るくなる、みんなの太陽担当。ただし本人は帰宅した瞬間スイッチが切れて、家では豆電球以下になっていることを誰も知らない。",
+    "炎は小さいのに火力だけは妙に本気。静かに燃えてるつもりが、たまに周りから「そんなに怒ってた?」と驚かれる。本人はただ真剣だっただけ。",
+    "どっしり構えてて動じないように見える山タイプ。だが内部では日々小規模な地殻変動(悩み)が発生しており、噴火の前兆に気づくのはいつも本人が最後。",
+    "誰かを育てるのが得意な畑タイプ。人にはちゃんと水と肥料をあげるのに、自分には「まあ後でいいか」を繰り返して、気づけば自分だけカラカラに乾いている。",
+    "白黒つけたい系。グレーゾーンで放置されると、頭の中で勝手に会議が始まって一人で結論を出してしまう。曖昧な返事をされるのが世界で一番苦手。",
+    "磨けば磨くほど輝くタイプ。その分、雑に扱われると普通の人の3倍くらい傷つく。本人はそれを顔に出さないので、余計に誰にも気づかれない。",
+    "器がでかい、包容力おばけ。何でも受け止められるはずなのに、たまに独りで勝手に満潮になって、誰も見てないところで静かに溢れている。",
+    "気づかれないところに、静かに染み込んでいくタイプ。誰かを潤しているうちに、自分の水分だけどんどん減っていくことに、本人だけ気づいていない。"
   ];
 
   const RELATIONS = {
     hikigo: {
       label:"比劫・似た者", comments:[
-        "今日は自分と似たタイプに囲まれやすい日。話は早いぶん、譲れないことも増えそう。",
-        "似た者同士、わかり合えるはずなのに、なぜか張り合ってしまう日。",
-        "自分のペースを乱されがちな日。無理に合わせなくていい。"
+        "今日は自分と似たタイプに囲まれやすい日。話は驚くほど早いのに、なぜか主導権の取り合いになりがち。鏡を見てるみたいで、地味に疲れる。",
+        "似た者同士、わかり合えるはずなのになぜか張り合ってしまう不思議な一日。多分お互い「私の方が正しい」と静かに思ってる。",
+        "自分のペースを乱されやすい日。周りが自分と同じテンポで動こうとしてきて、渋滞が起きる。今日ばかりは一人で歩いていい。",
+        "似たタイプが視界に入りやすい日。同じミスをする人を見て、妙に他人事に思えないやつ。",
+        "自分と近い価値観の人とぶつかりやすい日。正しさ同士のぶつかり合いは、たいてい痛み分けで終わる。",
+        "同族嫌悪、という言葉が頭をよぎる日。嫌いなところほど、自分にもある証拠だったりする。"
       ], prompts:[
-        "似たタイプの誰かに感じた、地味な張り合い。ここに置いていって。",
-        "自分と似てるからこそイラッとしたこと、書いてみて。"
+        "似たタイプの誰かに感じた、地味な張り合い。「なんであの人と私、こんなに気が合うのに疲れるんだろう」ってやつ、置いていって。",
+        "自分と似てるからこそイラッとしたこと。鏡みたいで嫌になった瞬間、書いてみて。",
+        "自分と同じタイプなのに、なぜか許せなかったこと。",
+        "「私はそこまでしない」と思った、誰かの行動。実は紙一重かもしれない話。"
       ]
     },
     inju: {
       label:"印・受け取る", comments:[
-        "今日は誰かに助けてもらえる巡り合わせ。素直に頼っていい日。",
-        "アドバイスや情報が自然と集まってくる日。取捨選択は自分次第。",
-        "エネルギーを補給できる日。一人で抱えなくていい。"
+        "今日は誰かに助けてもらえる巡り合わせ。素直に頼っていい日。断る理由を探すより、甘える理由を探した方が得。",
+        "アドバイスや情報が向こうから勝手に集まってくる日。取捨選択さえ間違えなければ、今日はだいぶ楽ができる。",
+        "エネルギー補給の日。一人で頑張り続けてきたことに、今日くらいはちゃんと休符をつけていい。",
+        "情報や知恵が集まる日。知ったかぶりせず、素直に「知らない」と言うと得する日。",
+        "誰かの言葉に救われやすい日。偶然聞いた一言が、あとからじわじわ効いてくる。",
+        "後ろ盾を感じられる日。一人でやってきたつもりのことにも、実は支えがあったと気づく。"
       ], prompts:[
-        "素直に頼れなかったこと、甘えられなかったこと。",
-        "誰かに助けてもらったのに、なんかモヤッとしたこと。"
+        "素直に頼れなかったこと、甘えられなかったこと。「大丈夫です」って言っちゃった、その裏側を書いていい。",
+        "誰かに助けてもらったのに、なぜかモヤッとした話。ありがたいのに素直になれない、そのねじれごと出して。",
+        "本当は助けてほしかったのに、我慢して一人でやったこと。",
+        "「頼っていいよ」と言われても、素直に頼れなかった理由。"
       ]
     },
     shokusho: {
       label:"食傷・与える", comments:[
-        "今日はこっちが与える側。ちょっと喋りすぎたかもって、夜に思うやつ。",
-        "アイデアも愚痴も出やすい日。溜め込んでたものが出ていく。",
-        "人のために動いたぶん、地味に消耗しやすい日。休憩は正当な権利。"
+        "今日はこっちが与える側。ノリで喋りすぎて、夜「言い過ぎたかも」と一人反省会が始まるやつ。それも含めて今日らしい。",
+        "アイデアも愚痴もやたら出やすい日。溜め込んでたものが堰を切ったように出ていく。止めなくていい、それが今日の仕事。",
+        "人のために動いた分、地味に電池を消耗しやすい日。頑張った自覚がなくても、今夜は早めに充電しておくが吉。",
+        "サービス精神が空回りしやすい日。頼まれてないことまでやって、勝手に疲れるやつ。",
+        "喋りたいことが多すぎる日。聞いてもらえただけで、だいぶ満たされる。",
+        "つい世話を焼いてしまう日。感謝より先に「余計なお世話だったかな」と不安になる癖が出やすい。"
       ], prompts:[
-        "喋りすぎた、尽くしすぎたって思うこと。",
-        "誰かのために動いて、地味に損した気がすること。"
+        "喋りすぎた、尽くしすぎたって思うこと。良かれと思ってやったのに、なんか損した気がする、あれ。",
+        "誰かのために動いて、地味に損した気がすること。感謝されたかどうかも、今日はもう気にしなくていい。",
+        "頼まれてもいないのに勝手にやって、勝手に疲れたこと。",
+        "「そこまでしなくていいよ」って、本当は自分に言いたかったこと。"
       ]
     },
     zai: {
       label:"財・動かす", comments:[
-        "段取りが効く日。思い通りに進むぶん、雑用が増える気配もある。",
-        "お金や物を動かしたくなる日。衝動買いにはひと呼吸。",
-        "自分のペースで物事をコントロールしやすい、けど気は抜けない日。"
+        "段取りがやたら効く日。思い通りに進む代わりに、細かい雑用がじわじわ増えていく。効率の代償、受け取っておいて。",
+        "お金や物を動かしたくなる日。財布のひもが緩みがちなので、レジ前でもう一呼吸だけ置いておくと後で助かる。",
+        "自分のペースで物事をコントロールしやすい日。ただし気を抜くと調子に乗って予定を詰め込みすぎる、それも今日の癖。",
+        "物欲センサーが敏感になる日。欲しいものリストが静かに伸びていく。",
+        "計画通りに進みやすい日。ただし「計画通り」であることに、ちょっと退屈もする。",
+        "所有欲が刺激される日。手に入れた後の満足感の短さにも、薄々気づいている。"
       ], prompts:[
-        "お金や物にまつわる、小さいけど根深いモヤモヤ。",
-        "思い通りにいかなかった段取りへの文句。"
+        "お金や物にまつわる、小さいけど根深いモヤモヤ。あの時のあの出費、実はまだ引っかかってるでしょ。",
+        "思い通りにいかなかった段取りへの文句。誰のせいでもないのに、なんか腹が立つやつ。",
+        "「安物買いの銭失い」を地でいったときの話。",
+        "欲しかったのに我慢したもの、今ならもう一度検討していい。"
       ]
     },
     kansatsu: {
       label:"官殺・試される", comments:[
-        "ルールや上からの圧を感じやすい日。全部真に受けなくていい。",
-        "頑張りを試されてる気がする日。今日は及第点で十分。",
-        "予定通りいかないことに振り回されやすい。深呼吸してから動いて。"
+        "ルールや上からの圧を感じやすい日。全部を真に受けると持たないので、6割の力で受け止めておくくらいがちょうどいい。",
+        "何かと頑張りを試されてる気がする日。今日に限っては満点を目指さなくていい。及第点で十分すぎるほど偉い。",
+        "予定通りにいかないことに振り回されやすい日。イライラしたら、深呼吸してから「まあいっか」を先に言ってしまうのが正解。",
+        "評価される場面が増える日。見られてる意識がちょっと重い。",
+        "枠にはめられてる感じがする日。はみ出したい気持ちはひとまず心の中にしまっておいて。",
+        "誰かの期待に応えなきゃという圧を感じる日。応えなくても、今日はいい。"
       ], prompts:[
-        "上の人・ルール・締切に対する愚痴、今日は解禁。",
-        "従うしかなかったことへの、ちょっとした反抗心。"
+        "上の人・ルール・締切に対する愚痴、今日は解禁。「それ、誰が決めたんですか」って心の中で言ったこと。",
+        "従うしかなかったことへの、ちょっとした反抗心。声に出せなかった分、ここでは全部出していい。",
+        "評価や締切のプレッシャーで、飲み込んだ一言。",
+        "「期待に応えなきゃ」で、ずっと我慢してること。"
       ]
     }
   };
 
   const CLOSING_LINES = [
-    "言えてすっきりした?今日はここまで。",
-    "燃やしたら、意外と軽い。",
-    "また明日、モヤモヤがあれば持ってきて。",
-    "灰になったぶん、荷物がひとつ減った。",
-    "今日の分の愚痴、確かに受け取った。",
-    "言葉にできただけで、上出来。"
+    "言えてすっきりした?今日の分の重さは、もうここに置いていった。",
+    "燃やしたら、意外と軽い。灰になった愚痴は、誰も裁かない。",
+    "また明日、モヤモヤがあれば持ってきて。ここはいつでも開いてる。",
+    "灰になったぶん、荷物がひとつ減った。身軽になった状態で、今夜はちゃんと眠って。",
+    "今日の分の愚痴、確かに受け取った。あとはこっちで処理しておく。",
+    "言葉にできただけで、今日はもう十分がんばった。",
+    "誰にも見せなかった分の本音、ちゃんと燃えていった。",
+    "スッキリした顔、してるかも。鏡は見なくていいけど。",
+    "今日の重さ、ちゃんとここに置いていけた。",
+    "誰にも迷惑かけずに、ちゃんと発散できた。それだけで花丸。",
+    "灰は残らない。あとくされなく、明日に進める。",
+    "書いたことは、もう過去のこと。今日はここで区切りをつけよう。",
+    "小さな声も、ちゃんと拾った。お疲れさま。",
+    "今日の分は、ここまで。また明日、話を聞かせて。"
   ];
 
   // ---------- rng ----------
@@ -586,22 +563,10 @@ footer button{ margin-top:2px; }
   const birthInput = document.getElementById("birthInput");
 
   function getSavedBirth(){
-    try{
-      const urlBirth = new URLSearchParams(location.search).get("bd");
-      if(urlBirth && /^\d{4}-\d{2}-\d{2}$/.test(urlBirth)){
-        localStorage.setItem("gucchi_birthdate", urlBirth);
-        return urlBirth;
-      }
-    }catch(e){}
     try{ return localStorage.getItem("gucchi_birthdate") || ""; }catch(e){ return ""; }
   }
   function saveBirth(v){
     try{ localStorage.setItem("gucchi_birthdate", v); }catch(e){}
-    try{
-      const url = new URL(location.href);
-      url.searchParams.set("bd", v);
-      history.replaceState(null, "", url);
-    }catch(e){}
   }
 
   function renderResult(birthStr){
@@ -612,7 +577,6 @@ footer button{ margin-top:2px; }
     const dayStemIdx = dp.stem;
     const el = ELEMENTS[elementOf(dayStemIdx)];
 
-    document.getElementById("birthNote").textContent = by+"年"+bm+"月"+bd+"日生まれ";
     document.getElementById("nisshuKanji").textContent = STEMS[dayStemIdx];
     const elEl = document.getElementById("nisshuElement");
     elEl.textContent = el.name + "(" + el.reading + ")";
@@ -643,17 +607,9 @@ footer button{ margin-top:2px; }
     document.getElementById("ventPrompt").textContent = prompt;
     document.getElementById("closingLine").textContent = "";
 
-    currentShareData = {
-      nisshuKanji: STEMS[dayStemIdx],
-      elementName: el.name,
-      todayKanshiText: ganZhiText(tdp),
-      relationLabel: rel.label
-    };
-
     entryPanel.hidden = true;
     resultArea.hidden = false;
   }
-  let currentShareData = null;
 
   function showEntry(prefill){
     if(prefill) birthInput.value = prefill;
@@ -670,31 +626,6 @@ footer button{ margin-top:2px; }
     showEntry(getSavedBirth());
   });
 
-  const copyLinkBtn = document.getElementById("copyLinkBtn");
-  copyLinkBtn.addEventListener("click", async ()=>{
-    const url = new URL(location.href);
-    url.searchParams.set("bd", getSavedBirth());
-    const linkText = url.toString();
-    const originalLabel = copyLinkBtn.textContent;
-    try{
-      await navigator.clipboard.writeText(linkText);
-      copyLinkBtn.textContent = "コピーしました";
-    }catch(e){
-      window.prompt("このURLをコピーして保存してください", linkText);
-    }
-    setTimeout(()=>{ copyLinkBtn.textContent = originalLabel; }, 2200);
-  });
-
-  const shareXBtn = document.getElementById("shareXBtn");
-  shareXBtn.addEventListener("click", ()=>{
-    if(!currentShareData) return;
-    const { nisshuKanji, elementName, todayKanshiText, relationLabel } = currentShareData;
-    const text = "わたしの日主は"+nisshuKanji+"("+elementName+")。今日は"+todayKanshiText+"、"+relationLabel+"の巡り。\n愚痴払い暦で診断→";
-    const shareUrl = location.origin + location.pathname;
-    const intentUrl = "https://twitter.com/intent/tweet?text="+encodeURIComponent(text)+"&url="+encodeURIComponent(shareUrl);
-    window.open(intentUrl, "_blank", "noopener,noreferrer");
-  });
-
   const saved = getSavedBirth();
   if(saved){
     renderResult(saved);
@@ -706,82 +637,26 @@ footer button{ margin-top:2px; }
 
   // ---------- burn (お焚き上げ) ----------
   const vent = document.getElementById("vent");
-  const ventStage = document.querySelector(".vent-stage");
   const burnBtn = document.getElementById("burnBtn");
   const closingLine = document.getElementById("closingLine");
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   burnBtn.addEventListener("click", ()=>{
-    if(burnBtn.disabled) return;
     if(!vent.value.trim()){
       closingLine.textContent = "何も書かれていない。思い浮かんだら、また来て。";
       return;
     }
-    burnVent();
-  });
-
-  function finishBurn(){
-    vent.value = "";
-    vent.style.opacity = "1";
-    burnBtn.disabled = false;
-    closingLine.textContent = CLOSING_LINES[Math.floor(Math.random()*CLOSING_LINES.length)];
-  }
-
-  function burnVent(){
-    burnBtn.disabled = true;
-
-    if(reduceMotion){
-      finishBurn();
-      return;
-    }
-
-    const text = vent.value;
-    const rect = vent.getBoundingClientRect();
-    const overlay = document.createElement("div");
-    overlay.className = "burn-overlay";
-
-    const spans = text.split("").map(ch=>{
-      const span = document.createElement("span");
-      span.className = "burn-char";
-      span.textContent = ch;
-      overlay.appendChild(span);
-      return span;
-    });
-    ventStage.appendChild(overlay);
+    if(!reduceMotion) spawnBurst(vent);
+    vent.style.transition = "opacity 0.5s ease, filter 0.5s ease";
     vent.style.opacity = "0";
-
-    const DURATION = 2000; // 0.5s ignite + 1.5s char-and-rise, per user spec
-    let maxDelay = 0;
-
-    spans.forEach((span,i)=>{
-      const delay = Math.random()*60; // slight flicker desync, not a left-to-right sweep
-      maxDelay = Math.max(maxDelay, delay);
-      span.style.animationDelay = delay+"ms";
-      span.classList.add("igniting");
-
-      if(i % 3 === 0){
-        // ignition whoosh, timed to the big-flame peak
-        setTimeout(()=>{
-          const r = span.getBoundingClientRect();
-          spawnBurstAt(r.left + r.width/2, r.top + r.height/2, 4);
-        }, delay + 180);
-        // crumbling into ash dots while it rises away
-        setTimeout(()=>{
-          const r = span.getBoundingClientRect();
-          spawnDustAt(r.left + r.width/2, r.top + r.height/2, 3);
-        }, delay + 950);
-        setTimeout(()=>{
-          const r = span.getBoundingClientRect();
-          spawnDustAt(r.left + r.width/2, r.top + r.height/2, 3);
-        }, delay + 1500);
-      }
-    });
-
+    vent.style.filter = "blur(3px)";
     setTimeout(()=>{
-      overlay.remove();
-      finishBurn();
-    }, maxDelay + DURATION + 100);
-  }
+      vent.value = "";
+      vent.style.opacity = "1";
+      vent.style.filter = "none";
+      closingLine.textContent = CLOSING_LINES[Math.floor(Math.random()*CLOSING_LINES.length)];
+    }, 480);
+  });
 
   // ---------- ambient + burst embers ----------
   const canvas = document.getElementById("bg");
@@ -812,34 +687,19 @@ footer button{ margin-top:2px; }
   embers = [];
   let burst = [];
 
-  function spawnBurstAt(x,y,count){
-    const n = count || 6;
+  function spawnBurst(fromEl){
+    const rect = fromEl.getBoundingClientRect();
+    const n = 26;
     for(let i=0;i<n;i++){
       burst.push({
-        x: x + (Math.random()-0.5)*8,
-        y: y + (Math.random()-0.5)*6,
+        x: rect.left + Math.random()*rect.width,
+        y: rect.top + rect.height*(0.3+Math.random()*0.5),
         r: 1.5 + Math.random()*2.6,
         vy: -(0.5 + Math.random()*0.9),
         vx: (Math.random()-0.5)*0.6,
         life: 1,
         decay: 0.008 + Math.random()*0.012,
         color: Math.random() < 0.5 ? "226,121,63" : "245,180,110"
-      });
-    }
-  }
-
-  function spawnDustAt(x,y,count){
-    const n = count || 3;
-    for(let i=0;i<n;i++){
-      burst.push({
-        x: x + (Math.random()-0.5)*10,
-        y: y + (Math.random()-0.5)*8,
-        r: 1 + Math.random()*1.7,
-        vy: -(0.3 + Math.random()*0.5),
-        vx: (Math.random()-0.5)*0.35,
-        life: 1,
-        decay: 0.013 + Math.random()*0.015,
-        color: Math.random() < 0.5 ? "90,72,60" : "45,34,28"
       });
     }
   }
